@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MBTI职业性格测试（93题完整版）</title>
+    <!-- 引入 html2canvas 和 jspdf 库 -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* --- 全局样式变量 --- */
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2ecc71;
+            --secondary-dark: #27ae60;
+            --accent: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --text: #222;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            /* 定义统一的动态过渡效果 */
+            --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: #f0f2f5;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 30px 20px;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        /* Header 动态效果 */
+        header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(44, 62, 80, 0.4);
+        }
+
+        header h1 { font-size: 24px; margin-bottom: 8px; font-weight: 700; }
+        header p { opacity: 0.9; font-size: 14px; }
+
+        /* Pages */
+        .page {
+            display: none;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .page.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Intro */
+        .intro-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            margin: 20px 0;
+            font-size: 15px;
+        }
+        .intro-box li { margin-left: 20px; margin-top: 5px; color: #555; }
+
+        /* Questions */
+        .progress-container { display: flex; align-items: center; margin-bottom: 20px; }
+        .progress-bar { height: 8px; background-color: #eee; border-radius: 4px; flex: 1; overflow: hidden; }
+        .progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+        .progress-text { margin-left: 10px; font-size: 14px; color: #666; font-weight: 600; width: 40px; text-align: right; }
+
+        .part-title { color: var(--primary); font-weight: bold; margin-bottom: 10px; font-size: 16px; }
+        .question-text { font-size: 19px; margin-bottom: 20px; font-weight: 600; color: #2c3e50; line-height: 1.4; }
+
+        .option {
+            padding: 14px 18px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .option:active { background-color: #eef5f9; border-color: var(--primary); transform: scale(0.98); }
+        .option.selected { border-color: var(--primary); background-color: #eef5f9; color: var(--primary); font-weight: 600; }
+        .option-label { font-weight: bold; width: 90px; flex-shrink: 0; }
+        .option-desc { color: #555; font-size: 15px; }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-group .btn { flex: 1; }
+        .btn-center { text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+
+        .btn-primary { background: var(--primary); }
+        .btn-secondary { background: #6c757d; }
+        .btn-save { background: #e67e22; }
+        .btn-pdf { background: #9b59b6; }
+        .btn-restart { background: #2ecc71; }
+
+        /* --- 结果页核心样式 --- */
+
+        /* 1. 头部大卡片 */
+        .result-header {
+            text-align: center;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 30px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+            transition: var(--transition);
+        }
+
+        .result-header:hover {
+            transform: scale(1.01) translateY(-2px);
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.4);
+        }
+
+        .type-big { font-size: 48px; font-weight: 800; margin: 5px 0; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .type-desc { font-size: 18px; opacity: 0.95; font-weight: 500; }
+
+        /* 2. 维度得分 (移动端 Grid 布局 + 动态效果) */
+        .traits-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .trait-box {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 12px 5px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        /* 维度卡片动态效果 */
+        .trait-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+            border-color: var(--primary);
+        }
+
+        .trait-val { font-size: 20px; font-weight: 800; color: var(--primary); display: block; margin: 4px 0; }
+        .trait-label { font-size: 12px; color: #888; margin-bottom: 2px; }
+        .trait-percent { font-size: 11px; color: #aaa; }
+
+        /* 3. 通用内容卡片 */
+        .result-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+
+        /* 卡片整体悬停效果 */
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .card h3 { color: var(--dark); border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; font-size: 17px; display: flex; align-items: center; }
+        .card h3::before { content: ''; display: inline-block; width: 6px; height: 16px; background: var(--primary); border-radius: 4px; margin-right: 8px; }
+        .card p { margin-bottom: 10px; color: #444; font-size: 15px; text-align: justify; }
+
+        /* 4. 名人列表 (动态增强) */
+        .famous-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .famous-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #e74c3c;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        /* 名人卡片动态效果 */
+        .famous-item:hover {
+            background: #fff;
+            transform: translateX(5px) translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left-width: 5px;
+        }
+        .famous-item:active { transform: scale(0.98); }
+
+        .famous-name { font-weight: bold; color: #2c3e50; font-size: 15px; margin-bottom: 4px; }
+        .famous-desc { color: #666; font-size: 13px; line-height: 1.4; }
+
+        /* 5. 职业标签 (动态增强) */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 10px; }
+
+        .tag {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #f0f4f8;
+            color: #2c3e50;
+            border-left: 3px solid var(--primary);
+            white-space: nowrap;
+            transition: var(--ease-elastic) 0.4s;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 职业标签动态效果 */
+        .tag:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: #eef5f9;
+            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.2);
+        }
+        .tag:active { transform: scale(0.95); }
+
+        /* 6. 恋爱与人际 (动态效果增强) */
+        .love-container { display: flex; flex-direction: column; gap: 15px; }
+
+        .love-card {
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: var(--transition);
+        }
+
+        /* 恋爱卡片整体悬停 */
+        .love-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .love-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .love-desc { font-size: 13px; margin-bottom: 12px; opacity: 0.8; line-height: 1.4; }
+
+        /* 动态 Tag 核心样式 - 恋爱人格按钮 */
+        .tag-love {
+            display: inline-block;
+            background: #fff;
+            padding: 6px 18px;
+            border-radius: 50px; /* 胶囊状 */
+            font-size: 13px;
+            font-weight: 800;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: all 0.3s var(--ease-elastic);
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 恋爱 Tag 悬停/点击效果 */
+        .tag-love:hover {
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+        .tag-love:active { transform: scale(0.9); }
+
+        /* 颜色主题 - 高度契合 (粉/红) */
+        .love-card.high { background-color: #fff0f6; border: 1px solid #ffadd2; color: #c41d7f; }
+        .love-card.high .tag-love { color: #eb2f96; border: 2px solid #ffadd2; }
+        .love-card.high .tag-love:hover { background: #eb2f96; color: #fff; border-color: #eb2f96; }
+
+        /* 颜色主题 - 默契 (蓝) */
+        .love-card.good { background-color: #f0f5ff; border: 1px solid #adc6ff; color: #1d39c4; }
+        .love-card.good .tag-love { color: #2f54eb; border: 2px solid #adc6ff; }
+        .love-card.good .tag-love:hover { background: #2f54eb; color: #fff; border-color: #2f54eb; }
+
+        /* 颜色主题 - 磨合 (橙/黄) */
+        .love-card.warn { background-color: #fff7e6; border: 1px solid #ffd591; color: #d46b08; }
+        .love-card.warn .tag-love { color: #fa8c16; border: 2px solid #ffd591; }
+        .love-card.warn .tag-love:hover { background: #fa8c16; color: #fff; border-color: #fa8c16; }
+
+        footer { text-align: center; padding: 30px; color: #999; font-size: 12px; margin-bottom: 20px; }
+
+        /* --- 移动端专属优化 --- */
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            .page { padding: 20px 15px; }
+
+            /* 修复维度得分在小屏幕的排列，使用 Grid */
+            .traits-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* 强制两列 */
+                gap: 12px;
+            }
+            .trait-box { margin-bottom: 0; padding: 15px 5px; }
+
+            /* 头部调整 */
+            .result-header { padding: 25px 15px; }
+            .type-big { font-size: 40px; }
+            .type-desc { font-size: 16px; }
+
+            /* 选项调整 */
+            .option { flex-direction: column; align-items: flex-start; padding: 12px; }
+            .option-label { margin-bottom: 4px; font-size: 14px; color: var(--primary); }
+            .option-desc { font-size: 15px; }
+
+            /* 按钮调整 */
+            .btn-center { flex-direction: column; }
+            .btn-center .btn { width: 100%; margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MBTI 职业性格测试</h1>
+            <p>93题专业完整版 · 深度解析</p>
+        </header>
+
+        <!-- 介绍页 -->
+        <div class="page active" id="intro-page">
+            <h2>欢迎参加测试</h2>
+            <p>MBTI 是一种自我报告式的人格测评工具，帮助您了解自己的心理倾向。</p>
+
+            <div class="intro-box">
+                <h3>📋 测试说明</h3>
+                <ul>
+                    <li>共 93 道题目，预计耗时 10-15 分钟。</li>
+                    <li>请凭第一直觉回答，无对错之分。</li>
+                    <li>请选择放松状态下最自然的反应。</li>
+                </ul>
+            </div>
+
+            <div class="btn-center">
+                <button class="btn btn-primary" onclick="startTest()">开始测试</button>
+            </div>
+        </div>
+
+        <!-- 答题页 -->
+        <div class="page" id="quiz-page">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress" id="progress-bar"></div>
+                </div>
+                <div class="progress-text" id="progress-text">1/93</div>
+            </div>
+
+            <div class="part-title" id="part-title">第一部分</div>
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div id="options-box"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="prev-btn" onclick="prevQuestion()" style="display:none">上一题</button>
+                <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">下一题</button>
+            </div>
+        </div>
+
+        <!-- 结果页 -->
+        <div class="page" id="result-page">
+            <!-- 头部大卡片 -->
+            <div class="result-header">
+                <div style="font-size: 14px; opacity: 0.8;">您的性格类型是</div>
+                <div class="type-big" id="res-type">ESTJ</div>
+                <div class="type-desc" id="res-title">总经理 - 出色的管理者</div>
+            </div>
+
+            <!-- 维度得分卡片 -->
+            <div class="traits-container" id="res-traits">
+                <!-- JS生成内容 -->
+            </div>
+
+            <div class="result-grid">
+                <div class="card">
+                    <h3>📊 基础分析</h3>
+                    <div id="res-analysis"></div>
+                </div>
+                <div class="card">
+                    <h3>✨ 核心特质</h3>
+                    <p><strong>🔥 优势：</strong><span id="res-strengths"></span></p>
+                    <p><strong>⚠️ 盲点：</strong><span id="res-weaknesses"></span></p>
+                </div>
+
+                <!-- 恋爱卡片区域 -->
+                <div class="card">
+                    <h3>❤️ 恋爱与人际</h3>
+                    <div id="res-love" class="love-container"></div>
+                </div>
+
+                <!-- 职业标签 -->
+                <div class="card">
+                    <h3>💼 推荐职业方向</h3>
+                    <div class="tag-container" id="res-careers"></div>
+                </div>
+
+                <!-- 名人列表卡片区域 -->
+                <div class="card">
+                    <h3>🌟 同类型名人</h3>
+                    <div class="famous-list" id="res-famous"></div>
+                </div>
+            </div>
+
+            <div class="btn-center" id="result-buttons">
+                <button class="btn btn-save" id="save-btn" onclick="saveReport()">保存结果图片</button>
+                <button class="btn btn-pdf" id="save-pdf-btn" onclick="savePDF()">保存结果PDF</button>
+                <button class="btn btn-restart" onclick="restartTest()">重新测试</button>
+            </div>
+        </div>
+
+        <footer>
+            本测试结果仅供参考，不能替代专业心理咨询
+        </footer>
+    </div>
+
+    <script>
+        // --- 数据集 (保持原样不变) ---
+        const questions = [
+            { part: 1, q: "当你要外出一整天,你会", a: "计划你要做什么和在什么时候做", b: "说去就去", da: "J", db: "P" },
+            { part: 1, q: "你认为自己是一个", a: "较为随兴所至的人", b: "较为有条理的人", da: "P", db: "J" },
+            { part: 1, q: "假如你是一位老师,你会选教", a: "以事实为主的课程", b: "涉及理论的课程", da: "S", db: "N" },
+            { part: 1, q: "你通常", a: "与人容易混熟", b: "比较沉静或矜持", da: "E", db: "I" },
+            { part: 1, q: "一般来说,你和哪些人比较合得来?", a: "富于想象力的人", b: "现实的人", da: "N", db: "S" },
+            { part: 1, q: "你是否经常让", a: "你的情感支配你的理智", b: "你的理智主宰你的情感", da: "F", db: "T" },
+            { part: 1, q: "处理许多事情上,你会喜欢", a: "凭兴所至行事", b: "按照计划行事", da: "P", db: "J" },
+            { part: 1, q: "你是否", a: "容易让人了解", b: "难于让人了解", da: "E", db: "I" },
+            { part: 1, q: "按照程序表做事,", a: "合你心意", b: "令你感到束缚", da: "J", db: "P" },
+            { part: 1, q: "当你有一份特别的任务,你会喜欢", a: "开始前小心组织计划", b: "边做边找须做什么", da: "J", db: "P" },
+            { part: 1, q: "在大多数情况下,你会选择", a: "顺其自然", b: "按程序表做事", da: "P", db: "J" },
+            { part: 1, q: "大多数人会说你是一个", a: "重视自我隐私的人", b: "非常坦率开放的人", da: "I", db: "E" },
+            { part: 1, q: "你宁愿被人认为是一个", a: "实事求是的人", b: "机灵的人", da: "S", db: "N" },
+            { part: 1, q: "在一大群人当中,通常是", a: "你介绍大家认识", b: "别人介绍你", da: "E", db: "I" },
+            { part: 1, q: "你会跟哪些人做朋友?", a: "常提出新注意的", b: "脚踏实地的", da: "N", db: "S" },
+            { part: 1, q: "你倾向", a: "重视感情多于逻辑", b: "重视逻辑多于感情", da: "F", db: "T" },
+            { part: 1, q: "你比较喜欢", a: "坐观事情发展才作计划", b: "很早就作计划", da: "P", db: "J" },
+            { part: 1, q: "你喜欢花很多的时间", a: "一个人独处", b: "合别人在一起", da: "I", db: "E" },
+            { part: 1, q: "与很多人一起会", a: "令你活力培增", b: "常常令你心力憔悴", da: "E", db: "I" },
+            { part: 1, q: "你比较喜欢", a: "很早便把约会、社交聚集等事情安排妥当", b: "无拘无束,看当时有什么好玩就做什么", da: "J", db: "P" },
+            { part: 1, q: "计划一个旅程时,你较喜欢", a: "大部分的时间都是跟当天的感觉行事", b: "事先知道大部分的日子会做什么", da: "P", db: "J" },
+            { part: 1, q: "在社交聚会中,你", a: "有时感到郁闷", b: "常常乐在其中", da: "I", db: "E" },
+            { part: 1, q: "你通常", a: "和别人容易混熟", b: "趋向自处一隅", da: "E", db: "I" },
+            { part: 1, q: "哪些人会更吸引你?", a: "一个思想敏捷及非常聪颖的人", b: "实事求是,具丰富常识的人", da: "N", db: "S" },
+            { part: 1, q: "在日常工作中,你会", a: "颇为喜欢处理迫使你分秒必争的突发", b: "通常预先计划,以免要在压力下工作", da: "P", db: "J" },
+            { part: 1, q: "你认为别人一般", a: "要花很长时间才认识你", b: "用很短的时间便认识你", da: "I", db: "E" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "注重隐私", b: "坦率开放", da: "I", db: "E" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "预先安排的", b: "无计划的", da: "J", db: "P" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "抽象", b: "具体", da: "N", db: "S" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "温柔", b: "坚定", da: "F", db: "T" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "思考", b: "感受", da: "T", db: "F" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "事实", b: "意念", da: "S", db: "N" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "冲动", b: "决定", da: "P", db: "J" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "热衷", b: "文静", da: "E", db: "I" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "文静", b: "外向", da: "I", db: "E" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "有系统", b: "随意", da: "J", db: "P" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "理论", b: "肯定", da: "N", db: "S" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "敏感", b: "公正", da: "F", db: "T" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "令人信服", b: "感人的", da: "T", db: "F" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "声明", b: "概念", da: "S", db: "N" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "不受约束", b: "预先安排", da: "P", db: "J" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "矜持", b: "健谈", da: "I", db: "E" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "有条不紊", b: "不拘小节", da: "J", db: "P" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "意念", b: "实况", da: "N", db: "S" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "同情怜悯", b: "远见", da: "F", db: "T" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "利益", b: "祝福", da: "T", db: "F" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "务实的", b: "理论的", da: "S", db: "N" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "朋友不多", b: "朋友众多", da: "I", db: "E" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "有系统", b: "即兴", da: "J", db: "P" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "富想象的", b: "以事论事", da: "N", db: "S" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "亲切的", b: "客观的", da: "F", db: "T" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "客观的", b: "热情的", da: "T", db: "F" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "建造", b: "发明", da: "S", db: "N" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "文静", b: "爱合群", da: "I", db: "E" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "理论", b: "事实", da: "N", db: "S" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "富同情", b: "合逻辑", da: "F", db: "T" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "具分析力", b: "多愁善感", da: "T", db: "F" },
+            { part: 2, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "合情合理", b: "令人着迷", da: "S", db: "N" },
+            { part: 3, q: "当你要在一个星期内完成一个大项目,你在开始的时候会", a: "把要做的不同工作依次列出", b: "马上动工", da: "J", db: "P" },
+            { part: 3, q: "在社交场合中,你经常会感到", a: "与某些人很难打开话匣儿和保持对话", b: "与多数人都能从容地长谈", da: "I", db: "E" },
+            { part: 3, q: "要做许多人也做的事,你比较喜欢", a: "按照一般认可的方法去做", b: "构想一个自己的想法", da: "S", db: "N" },
+            { part: 3, q: "你刚认识的朋友能否说出你的兴趣?", a: "能", b: "不能", da: "E", db: "I" },
+            { part: 3, q: "你通常较喜欢的科目是", a: "讲授概念和原则的", b: "讲授事实和数据的", da: "N", db: "S" },
+            { part: 3, q: "哪个是较高的赞誉,或称许为?", a: "一贯感性的人", b: "一贯理性的人", da: "F", db: "T" },
+            { part: 3, q: "你认为按照程序表做事", a: "有时是需要的,但一般来说你不大喜欢这样做", b: "大多数情况下是有帮助而且是你喜欢做的", da: "P", db: "J" },
+            { part: 3, q: "和一群人在一起,你通常会选", a: "跟你很熟悉的个别人谈话", b: "参与大伙的谈话", da: "I", db: "E" },
+            { part: 3, q: "在社交聚会上,你会", a: "是说话很多的一个", b: "让别人多说话", da: "E", db: "I" },
+            { part: 3, q: "把周末期间要完成的事列成清单,这个主意会", a: "合你意", b: "使你提不起劲", da: "J", db: "P" },
+            { part: 3, q: "哪个是较高的赞誉,或称许为", a: "能干的", b: "富有同情心", da: "T", db: "F" },
+            { part: 3, q: "你通常喜欢", a: "事先安排你的社交约会", b: "随兴之所至做事", da: "J", db: "P" },
+            { part: 3, q: "总的说来,要做一个大型作业时,你会选", a: "边做边想该做什么", b: "首先把工作按步细分", da: "P", db: "J" },
+            { part: 3, q: "你能否滔滔不绝地与人聊天", a: "只限于跟你有共同兴趣的人", b: "几乎跟任何人都可以", da: "I", db: "E" },
+            { part: 3, q: "你会", a: "跟随一些证明有效的方法", b: "分析还有什么毛病,及针对尚未解决的难题", da: "S", db: "N" },
+            { part: 3, q: "为乐趣而阅读时,你会", a: "喜欢奇特或创新的表达方式", b: "喜欢作者直话直说", da: "N", db: "S" },
+            { part: 3, q: "你宁愿替哪一类上司(或者老师)工作?", a: "天性淳良,但常常前后不一的", b: "言词尖锐但永远合乎逻辑的", da: "F", db: "T" },
+            { part: 3, q: "你做事多数是", a: "按当天心情去做", b: "照拟好的程序表去做", da: "P", db: "J" },
+            { part: 3, q: "你是否", a: "可以和任何人按需求从容地交谈", b: "只是对某些人或在某种情况下才可以畅所欲言", da: "E", db: "I" },
+            { part: 3, q: "要作决定时,你认为比较重要的是", a: "据事实衡量", b: "考虑他人的感受和意见", da: "T", db: "F" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "想象的", b: "真实的", da: "N", db: "S" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "仁慈慷慨的", b: "意志坚定的", da: "F", db: "T" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "公正的", b: "有关怀心", da: "T", db: "F" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "制作", b: "设计", da: "S", db: "N" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "可能性", b: "必然性", da: "N", db: "S" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "温柔", b: "力量", da: "F", db: "T" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "实际", b: "多愁善感", da: "T", db: "F" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "制造", b: "创造", da: "S", db: "N" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "新颖的", b: "已知的", da: "N", db: "S" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "同情", b: "分析", da: "F", db: "T" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "坚持己见", b: "温柔有爱心", da: "T", db: "F" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "具体的", b: "抽象的", da: "S", db: "N" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "全心投入", b: "有决心的", da: "F", db: "T" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "能干", b: "仁慈", da: "T", db: "F" },
+            { part: 4, q: "在下列每一对词语中,哪一个词语更合你心意?", a: "实际", b: "创新", da: "S", db: "N" }
+        ];
+
+        const partTitles = { 1: "第一部分：行为习惯", 2: "第二部分：价值观选择", 3: "第三部分：社交与决策", 4: "第四部分：思维倾向" };
+
+        const personalityTypes = {
+            "ISTJ": {
+                name: "物流师",
+                title: "可靠、务实的逻辑主义者",
+                analysis: "ISTJ型的人安静、严肃，通过全面性和可靠性获得成功。你是典型的现实主义者，做事有条理、有计划。你重视传统和忠诚，一旦承诺就会全力以赴。",
+                strengths: "意志坚定、值得信赖、注重细节、有条理、责任心强。",
+                weaknesses: "可能显得固执、对变化适应较慢、过于注重规则、有时可能忽视他人的情感需求。",
+                love: { high: ["ESFJ", "ESTJ"], good: ["ISFJ", "ISTJ"], warn: ["ENFP", "ENTP"] },
+                famous: [
+                    { name: "刘德华", desc: "娱乐圈的“劳模”代表，数十年如一日的极致敬业与自律。" },
+                    { name: "易烊千玺", desc: "超越年龄的沉稳与踏实，在工作学习中表现出极强的规划性。" },
+                    { name: "乔治·华盛顿", desc: "坚毅的开国元勋，以原则和责任感建立秩序。" },
+                    { name: "沃伦·巴菲特", desc: "务实的价值投资者，坚持长期主义和纪律。" }
+                ],
+                careers: ["CFO/CEO", "会计师", "审计员", "数据库管理员", "军官", "法官", "行政管理"]
+            },
+            "ISFJ": {
+                name: "守护者",
+                title: "专注奉献、体贴的守护者",
+                analysis: "ISFJ型的人安静、友好、有责任感。你坚定地致力于完成义务，非常关心他人的感受。你努力把工作和家庭环境营造得有序而温馨，是团队中默默付出的稳定力量。",
+                strengths: "支持性强、有同情心、可靠、细心、优秀的组织能力。",
+                weaknesses: "过于谦虚、难以拒绝他人、容易过度自我牺牲、对批评比较敏感。",
+                love: { high: ["ESFJ", "ESTJ"], good: ["ISFJ", "ISTJ"], warn: ["ENTP", "ENFP"] },
+                famous: [
+                    { name: "刘若英", desc: "温暖细腻，歌曲和言行中流露出对他人深切的关怀。" },
+                    { name: "海清", desc: "荧幕上的“国民媳妇”，形象亲切务实，充满生活气息。" },
+                    { name: "特蕾莎修女", desc: "将毕生精力无私奉献给穷人和病患，极致的守护者。" },
+                    { name: "伊丽莎白二世", desc: "以责任和传统为重，一生尽职尽责的君主。" }
+                ],
+                careers: ["医生/护士", "教师", "社工", "行政助理", "室内设计师", "人力资源"]
+            },
+            "INFJ": {
+                name: "提倡者",
+                title: "安静神秘、鼓舞人心的理想主义者",
+                analysis: "INFJ寻求思想、关系、物质等之间的意义和联系。你有很强的洞察力，坚持自己的价值观。你不仅是梦想家，更是行动派，在实现目标的计划中果断坚定。",
+                strengths: "富有创意、洞察力强、有原则、充满热情、利他主义。",
+                weaknesses: "过于敏感、完美主义、容易倦怠、有时过于私密难懂。",
+                love: { high: ["ENFP", "ENTP"], good: ["ENFJ", "INFP"], warn: ["ESTJ", "ISTJ"] },
+                famous: [
+                    { name: "王菲", desc: "特立独行，忠于内心，追求精神自由与纯粹。" },
+                    { name: "梁朝伟", desc: "深沉内向，眼神中充满故事，擅长演绎复杂的内心世界。" },
+                    { name: "周深", desc: "拥有极高的共情能力和细腻的观察力，治愈系歌手。" },
+                    { name: "马丁·路德·金", desc: "用梦想和精神力量鼓舞世人的民权领袖。" }
+                ],
+                careers: ["心理咨询师", "作家", "非营利组织管理者", "艺术指导", "特殊教育教师"]
+            },
+            "INTJ": {
+                name: "建筑师",
+                title: "富有想象力和战略性的思想家",
+                analysis: "INTJ拥有无限的思维火花和实现目标的动力。你能敏锐地洞察规律并制定长期计划。你独立、多疑，对自己和他人的能力都有极高的要求。",
+                strengths: "理性、有远见、独立、果断、天生的战略家。",
+                weaknesses: "可能显得傲慢、过于批判、忽视情感层面、对社交规则不屑一顾。",
+                love: { high: ["ENFP", "ENTP"], good: ["INTP", "ENTJ"], warn: ["ESFP", "ISFP"] },
+                famous: [
+                    { name: "张艺谋", desc: "对宏大项目有极强的掌控力，追求极致的战略与美学。" },
+                    { name: "王石", desc: "具有深远的战略眼光和强大意志力的企业家。" },
+                    { name: "埃隆·马斯克", desc: "致力于构建未来的科技狂人，以逻辑重塑世界。" },
+                    { name: "尼采", desc: "深刻洞察人性与哲学的思想家，独立的批判者。" }
+                ],
+                careers: ["系统架构师", "科学家", "战略规划师", "投资银行家", "软件工程师"]
+            },
+            "ISTP": {
+                name: "鉴赏家",
+                title: "大胆实际的操作者",
+                analysis: "ISTP灵活、忍耐力强，是安静的观察者。一旦问题出现，你会迅速找到实用的解决方法。你对原理感兴趣，喜欢用逻辑分析和动手能力来处理问题。",
+                strengths: "乐观、精力充沛、抗压能力强、务实、善于解决突发危机。",
+                weaknesses: "情感迟钝、容易感到无聊、不喜欢承诺、有时过于冒险。",
+                love: { high: ["ESFJ", "ESTJ"], good: ["ISFJ", "ISTP"], warn: ["ENFJ", "INFJ"] },
+                famous: [
+                    { name: "谢霆锋", desc: "精通厨艺与特效，冷静务实的实干派。" },
+                    { name: "吴京", desc: "硬汉形象，专注于动作领域，解决实际问题的能力极强。" },
+                    { name: "汤姆·克鲁斯", desc: "亲自上阵挑战高难度特技，追求极致的操作体验。" },
+                    { name: "迈克尔·乔丹", desc: "球场上冷静的杀手，技术精湛的实战家。" }
+                ],
+                careers: ["飞行员", "机械工程师", "警察/消防员", "数据分析师", "急诊医生"]
+            },
+            "ISFP": {
+                name: "探险家",
+                title: "灵活有魅力的艺术家",
+                analysis: "ISFP安静、友好、敏感。你活在当下，享受属于自己的空间和时间。你对价值观忠诚，不喜欢争论和冲突，不会将自己的观念强加于人。",
+                strengths: "极具艺术感、有魅力、想象力丰富、充满好奇心、富有同情心。",
+                weaknesses: "过度独立、容易紧张、缺乏长远规划、难以处理批评意见。",
+                love: { high: ["ESFJ", "ENFJ"], good: ["ISFP", "ISTP"], warn: ["ENTJ", "INTJ"] },
+                famous: [
+                    { name: "梁家辉", desc: "演技多变，为人低调随和，极具艺术适应性。" },
+                    { name: "刘亦菲", desc: "气质温婉淡然，与世无争，活在当下的艺术家。" },
+                    { name: "迈克尔·杰克逊", desc: "敏感而温柔的流行天王，用音乐表达纯粹的情感。" },
+                    { name: "Lady Gaga", desc: "风格多变，极具创造力的舞台艺术家。" }
+                ],
+                careers: ["艺术家", "设计师", "兽医", "厨师", "自由职业者", "心理咨询"]
+            },
+            "INFP": {
+                name: "调停者",
+                title: "诗意善良的利他主义者",
+                analysis: "INFP是真正的理想主义者，外观冷静，内心热情。你追求内心价值观与外部生活的统一。你好奇心重，善于发现可能性，是实现想法的催化剂。",
+                strengths: "同理心强、慷慨大度、思想开放、富有创造力、追求和谐。",
+                weaknesses: "不切实际、容易自我批评、难以专注细节、在压力下容易情绪化。",
+                love: { high: ["ENFJ", "ENTJ"], good: ["INFP", "ENFP"], warn: ["ESTJ", "ISTJ"] },
+                famous: [
+                    { name: "朴树", desc: "忠于内心的音乐人，对待世界有一种纯粹的诚实。" },
+                    { name: "周迅", desc: "表演充满灵气，情感丰富而直接，落入凡间的精灵。" },
+                    { name: "约翰尼·德普", desc: "风格独特，总是饰演内心丰富且古怪的角色。" },
+                    { name: "宫崎骏", desc: "构建温暖治愈的奇幻世界，传递和平与爱的理想。" }
+                ],
+                careers: ["作家/编辑", "心理学家", "人力资源", "大学教授", "社会活动家"]
+            },
+            "INTP": {
+                name: "逻辑学家",
+                title: "具有创造力的发明家",
+                analysis: "INTP对感兴趣的事物寻求合理的解释。你喜欢理论和抽象事物，热衷于思考而非社交。你安静、内向、灵活，拥有非凡的专注力来解决逻辑难题。",
+                strengths: "分析能力强、原创性、思想开放、客观、求知欲旺盛。",
+                weaknesses: "容易脱离现实、难以表达情感、对细节不耐烦、可能显得居高临下。",
+                love: { high: ["ENTJ", "ENFJ"], good: ["INTP", "ENTP"], warn: ["ESFJ", "ISFJ"] },
+                famous: [
+                    { name: "李健", desc: "清华音乐诗人，谈吐充满哲思、逻辑与冷幽默。" },
+                    { name: "方文山", desc: "歌词充满天马行空的想象，构建独特的文化逻辑体系。" },
+                    { name: "爱因斯坦", desc: "以纯粹的思维实验探索宇宙真理的科学巨人。" },
+                    { name: "比尔·盖茨", desc: "用技术逻辑重塑世界的思考者与架构师。" }
+                ],
+                careers: ["软件架构师", "数学家", "金融分析师", "大学教授", "研究员"]
+            },
+            "ESTP": {
+                name: "企业家",
+                title: "聪明精力的享受者",
+                analysis: "ESTP灵活、务实，认为理论很无趣。你喜欢通过行动解决问题，注重当下，自然不做作。你通过亲身经历学习新事物，是天生的冒险家。",
+                strengths: "大胆直接、理性务实、社交能力强、洞察力敏锐、充满活力。",
+                weaknesses: "不耐烦、冲动、忽视大局、可能不顾及他人感受。",
+                love: { high: ["ISFJ", "ISTJ"], good: ["ESTP", "ESFP"], warn: ["INFJ", "INTJ"] },
+                famous: [
+                    { name: "黄子韬", desc: "性格直率真实，不拘小节，行动力强的冒险家。" },
+                    { name: "孙红雷", desc: "幽默狡黠，务实且反应迅速，极具综艺感的实干派。" },
+                    { name: "麦当娜", desc: "大胆突破常规，充满活力的流行文化女王。" },
+                    { name: "特朗普", desc: "充满争议但也极具能量的商业与政治操盘手。" }
+                ],
+                careers: ["企业家", "销售总监", "股票经纪人", "职业运动员", "谈判专家"]
+            },
+            "ESFP": {
+                name: "表演者",
+                title: "自发而精力充沛的娱乐者",
+                analysis: "ESFP外向、友好。你热爱生活、人类和物质享受。你喜欢协同工作，讲究常识和实用性。你灵活自然，能迅速适应新环境，让工作和生活都充满乐趣。",
+                strengths: "大胆、原创、美感极佳、观察力强、人际关系极好。",
+                weaknesses: "难以专注、容易感到无聊、规划能力弱、回避冲突。",
+                love: { high: ["ISFJ", "ISTJ"], good: ["ESFP", "ESTP"], warn: ["INTJ", "INTP"] },
+                famous: [
+                    { name: "谢娜", desc: "活力四射，善于搞怪和活跃气氛的快乐源泉。" },
+                    { name: "小S", desc: "热辣直接，反应敏捷，也是当下的享乐主义者。" },
+                    { name: "玛丽莲·梦露", desc: "聚光灯下的焦点，充满魅力与感性的永恒icon。" },
+                    { name: "威尔·史密斯", desc: "幽默风趣，极具感染力的票房巨星。" }
+                ],
+                careers: ["活动策划", "公关", "演员", "销售代表", "幼儿教师", "导游"]
+            },
+            "ENFP": {
+                name: "竞选者",
+                title: "热情有创造力的社交者",
+                analysis: "ENFP热情洋溢、富有想象力。你认为人生充满可能性，能迅速将信息联系起来。你自信、灵活，即兴发挥能力强，总是能给他人带来激励。",
+                strengths: "好奇心强、观察力敏锐、精力充沛、善于沟通、非常受欢迎。",
+                weaknesses: "思维跳跃、过度情绪化、容易感到压力、由于想讨好所有人而过度承诺。",
+                love: { high: ["INFJ", "INTJ"], good: ["ENFP", "ENFJ"], warn: ["ISTJ", "ESTJ"] },
+                famous: [
+                    { name: "大张伟", desc: "思维跳跃，金句频出，永远保持少年的活力与创意。" },
+                    { name: "沈腾", desc: "幽默感浑然天成，极具亲和力与即兴创作能力。" },
+                    { name: "罗伯特·唐尼", desc: "充满魅力与智慧，经历跌宕起伏仍保持乐观。" },
+                    { name: "马克·吐温", desc: "幽默讽刺的文学大师，对人性充满好奇。" }
+                ],
+                careers: ["记者", "广告创意", "咨询顾问", "主持人", "活动策划"]
+            },
+            "ENTP": {
+                name: "辩论家",
+                title: "聪明好奇的思想家",
+                analysis: "ENTP反应快、睿智，直言不讳。在解决挑战性问题时机智而有策略。你善于找出理论上的可能性，不喜欢例行公事，总是追求新的兴趣。",
+                strengths: "知识渊博、思维敏捷、原创性强、极具魅力、优秀的头脑风暴者。",
+                weaknesses: "喜欢争辩、对细节不耐烦、注意力难以集中、情感上可能不敏感。",
+                love: { high: ["INFJ", "INTJ"], good: ["ENTP", "ENFP"], warn: ["ISFJ", "ESFJ"] },
+                famous: [
+                    { name: "罗永浩", desc: "天生的演说家，理想主义与商业逻辑的不断碰撞者。" },
+                    { name: "马云", desc: "眼光独到，善于打破常规，极具煽动力的商业领袖。" },
+                    { name: "达芬奇", desc: "跨越艺术与科学的全能天才，永无止境的好奇心。" },
+                    { name: "小丑(Joker)", desc: "混乱与智慧并存，挑战既定秩序的极致反派。" }
+                ],
+                careers: ["律师", "企业家", "风险投资人", "市场总监", "政治顾问"]
+            },
+            "ESTJ": {
+                name: "总经理",
+                title: "出色的管理者",
+                analysis: "ESTJ实际、现实主义。你果断，一旦下决心就会马上行动。你善于组织项目和人员，注重日常细节。你有一套清晰的逻辑标准，是天生的管理者。",
+                strengths: "专注、意志坚定、忠诚可靠、善于建立秩序、直接。",
+                weaknesses: "固执、不灵活、不愿创新、可能由于太注重结果而显得冷漠。",
+                love: { high: ["ISFP", "ISTP"], good: ["ESTJ", "ESFJ"], warn: ["INFP", "ENFP"] },
+                famous: [
+                    { name: "张艺兴", desc: "以“努力”为信条，对自己要求极高，目标明确的执行者。" },
+                    { name: "董明珠", desc: "商界铁娘子，作风强悍，追求极致效率与结果。" },
+                    { name: "洛克菲勒", desc: "建立庞大商业帝国的石油大亨，秩序与效率的化身。" },
+                    { name: "希拉里·克林顿", desc: "意志坚定，行事果断，传统的政治精英。" }
+                ],
+                careers: ["CEO/高管", "项目经理", "药剂师", "警官", "法官"]
+            },
+            "ESFJ": {
+                name: "执政官",
+                title: "极有同情心的组织者",
+                analysis: "ESFJ有责任心，合作。你希望周边环境温馨和谐。你喜欢精确及时地完成任务，事无巨细都会保持忠诚。你能体察他人所需，是极佳的团队维护者。",
+                strengths: "实践能力强、责任感极强、非常忠诚、敏感且温暖、善于联系他人。",
+                weaknesses: "担心社会地位、缺乏灵活性、不愿走出舒适区、过度依恋。",
+                love: { high: ["ISFP", "ISTP"], good: ["ESFJ", "ESTJ"], warn: ["INTP", "ENTP"] },
+                famous: [
+                    { name: "贾玲", desc: "高情商的喜剧人，总是温暖地照顾身边每一个人的情绪。" },
+                    { name: "何炅", desc: "细致周到的主持人，如同大家长般维护团队和谐。" },
+                    { name: "泰勒·斯威夫特", desc: "珍视粉丝与朋友，用音乐记录情感的真诚创作者。" },
+                    { name: "拜登", desc: "强调团结与家庭价值观，传统的政治维护者。" }
+                ],
+                careers: ["行政管理", "公关", "医疗保健", "教育", "客户服务"]
+            },
+            "ENFJ": {
+                name: "主人公",
+                title: "富有魅力鼓舞人心的领导者",
+                analysis: "ENFJ温情、有同情心。你非常关注别人的情绪和需要，善于发现他人潜能。你是个人或群体成长的催化剂，具有极强的鼓舞人心的领导能力。",
+                strengths: "宽容、可靠、有号召力、利他主义、天生的领导者。",
+                weaknesses: "过于理想化、过度无私导致自我忽略、极其敏感、自尊心波动大。",
+                love: { high: ["INFP", "ISFP"], good: ["ENFJ", "INFJ"], warn: ["ISTP", "ESTP"] },
+                famous: [
+                    { name: "撒贝宁", desc: "幽默与智慧并存，控场能力强，能给观众带来正能量。" },
+                    { name: "蔡康永", desc: "温柔而坚定，善于挖掘人心，极具共情力的沟通者。" },
+                    { name: "奥普拉", desc: "脱口秀女王，用同理心连接世界，鼓舞无数女性。" },
+                    { name: "詹妮弗·劳伦斯", desc: "真诚直率，极具人格魅力，深受喜爱的影后。" }
+                ],
+                careers: ["人力资源总监", "公关经理", "销售培训师", "非营利组织高管", "政客"]
+            },
+            "ENTJ": {
+                name: "指挥官",
+                title: "大胆富有想象力的领导者",
+                analysis: "ENTJ坦诚、具决策力。你长于发展与实施系统以解决组织问题。你乐于吸收新知，喜欢长远策划。你是天生的统帅，总能发现低效并纠正它。",
+                strengths: "高效、精力充沛、自信、意志坚定、具有战略眼光。",
+                weaknesses: "固执、不能容忍低效、傲慢、处理情感问题笨拙、冷酷。",
+                love: { high: ["INTP", "INFP"], good: ["ENTJ", "INTJ"], warn: ["ISFP", "ESFP"] },
+                famous: [
+                    { name: "杨幂", desc: "人间清醒，事业规划清晰，执行力极强的女强人。" },
+                    { name: "张兰", desc: "生命力顽强，在商业竞争中展现出霸气与决断。" },
+                    { name: "史蒂夫·乔布斯", desc: "用现实扭曲力场改变世界的科技暴君与愿景家。" },
+                    { name: "撒切尔夫人", desc: "铁娘子，以强硬手腕推行改革的政治领袖。" }
+                ],
+                careers: ["公司创始人", "高管", "管理顾问", "法官", "大学校长"]
+            }
+        };
+
+        // --- 逻辑处理 ---
+        let currentIdx = 0;
+        let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+        let userAnswers = new Array(questions.length).fill(null);
+
+        // 页面元素
+        const pages = {
+            intro: document.getElementById('intro-page'),
+            quiz: document.getElementById('quiz-page'),
+            result: document.getElementById('result-page')
+        };
+        const els = {
+            progress: document.getElementById('progress-bar'),
+            progressText: document.getElementById('progress-text'),
+            partTitle: document.getElementById('part-title'),
+            qText: document.getElementById('question-text'),
+            options: document.getElementById('options-box'),
+            prevBtn: document.getElementById('prev-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            resultButtons: document.getElementById('result-buttons'),
+            saveBtn: document.getElementById('save-btn'),
+            savePdfBtn: document.getElementById('save-pdf-btn'),
+            resultSection: document.getElementById('result-page')
+        };
+
+        function switchPage(pageName) {
+            Object.values(pages).forEach(el => el.classList.remove('active'));
+            pages[pageName].classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function startTest() {
+            switchPage('quiz');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            const percent = ((currentIdx) / questions.length) * 100;
+
+            els.progress.style.width = `${percent}%`;
+            els.progressText.innerText = `${currentIdx + 1}/${questions.length}`;
+            els.partTitle.innerText = partTitles[q.part];
+            els.qText.innerText = `${currentIdx + 1}. ${q.q}`;
+
+            els.prevBtn.style.display = currentIdx === 0 ? 'none' : 'block';
+            els.nextBtn.innerText = currentIdx === questions.length - 1 ? '查看结果' : '下一题';
+
+            els.options.innerHTML = '';
+            const choices = [
+                { label: "非常符合", val: 2, text: q.a },
+                { label: "比较符合", val: 1, text: q.a },
+                { label: "难以决定", val: 0, text: "中立" },
+                { label: "比较符合", val: -1, text: q.b },
+                { label: "非常符合", val: -2, text: q.b }
+            ];
+
+            choices.forEach((c, idx) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                if (userAnswers[currentIdx] === idx) div.classList.add('selected');
+
+                div.innerHTML = `
+                    <div class="option-label">${c.label}</div>
+                    <div class="option-desc">${c.label === "难以决定" ? "" : c.text}</div>
+                `;
+                div.onclick = () => selectOption(idx, c.val, q.da, q.db);
+                els.options.appendChild(div);
+            });
+        }
+
+        function selectOption(idx, val, da, db) {
+            userAnswers[currentIdx] = idx;
+            questions[currentIdx].scoreVal = val;
+
+            const opts = document.querySelectorAll('.option');
+            opts.forEach(o => o.classList.remove('selected'));
+            opts[idx].classList.add('selected');
+
+            setTimeout(() => {
+                if (currentIdx < questions.length - 1) {
+                    currentIdx++;
+                    renderQuestion();
+                } else {
+                    calcResult();
+                }
+            }, 250);
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentIdx] === null) return alert("请先选择一项");
+            if (currentIdx < questions.length - 1) {
+                currentIdx++;
+                renderQuestion();
+            } else {
+                calcResult();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestion();
+            }
+        }
+
+        const loveDescriptions = {
+            high: "天生一对：价值观高度契合，默契十足，容易建立长久稳定的关系。",
+            good: "默契搭档：性格互补，能够相互促进，在相处中共同成长。",
+            warn: "需要磨合：思考方式差异较大，需要更多的沟通与包容。"
+        };
+
+        function calcResult() {
+            scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            questions.forEach(q => {
+                const val = q.scoreVal;
+                if (val !== undefined && val !== null) {
+                    if (val > 0) scores[q.da] += val;
+                    else if (val < 0) scores[q.db] += Math.abs(val);
+                    else { scores[q.da] += 0.5; scores[q.db] += 0.5; }
+                }
+            });
+
+            const type = (
+                (scores.E >= scores.I ? 'E' : 'I') +
+                (scores.S >= scores.N ? 'S' : 'N') +
+                (scores.T >= scores.F ? 'T' : 'F') +
+                (scores.J >= scores.P ? 'J' : 'P')
+            );
+
+            const data = personalityTypes[type];
+
+            document.getElementById('res-type').innerText = type;
+            document.getElementById('res-title').innerText = `${data.name} - ${data.title}`;
+
+            const traits = [
+                { k1: 'E', k2: 'I', n1: '外向', n2: '内向' },
+                { k1: 'S', k2: 'N', n1: '实感', n2: '直觉' },
+                { k1: 'T', k2: 'F', n1: '理智', n2: '情感' },
+                { k1: 'J', k2: 'P', n1: '判断', n2: '感知' }
+            ];
+
+            document.getElementById('res-traits').innerHTML = traits.map(t => {
+                const s1 = scores[t.k1], s2 = scores[t.k2];
+                const total = s1 + s2 || 1;
+                const p1 = Math.round((s1/total)*100);
+                const main = s1 >= s2 ? t.k1 : t.k2;
+                return `
+                    <div class="trait-box">
+                        <div class="trait-label">${t.n1} vs ${t.n2}</div>
+                        <span class="trait-val">${main}</span>
+                        <div class="trait-percent">倾向 ${Math.max(p1, 100-p1)}%</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('res-analysis').innerHTML = `<p>您的测试结果是 <strong>${type}</strong>。</p><p>${data.analysis}</p>`;
+            document.getElementById('res-strengths').innerText = data.strengths;
+            document.getElementById('res-weaknesses').innerText = data.weaknesses;
+
+            // 恋爱卡片生成 (修复动态效果)
+            const love = data.love;
+            let loveHTML = '';
+
+            const createMatchCard = (key, title, icon) => {
+                const types = love[key];
+                if(!types || types.length === 0) return '';
+
+                // 修改：给每个 tag 添加动态类名 tag-love
+                const tagsHTML = types.map(t => `<span class="tag-love">${t}</span>`).join('');
+
+                return `
+                    <div class="love-card ${key}">
+                        <div class="love-title">
+                            <span style="font-size:1.3em">${icon}</span> ${title}
+                        </div>
+                        <div class="love-desc">${loveDescriptions[key]}</div>
+                        <div class="tag-container">
+                            ${tagsHTML}
+                        </div>
+                    </div>
+                `;
+            };
+
+            loveHTML += createMatchCard('high', '天生一对', '💖');
+            loveHTML += createMatchCard('good', '默契搭档', '🤝');
+            loveHTML += createMatchCard('warn', '需要磨合', '⚡');
+
+            document.getElementById('res-love').innerHTML = loveHTML;
+
+            // 名人
+            document.getElementById('res-famous').innerHTML = data.famous.map(n => `
+                <div class="famous-item">
+                    <span class="famous-name">${n.name}</span>
+                    <span class="famous-desc">${n.desc}</span>
+                </div>
+            `).join('');
+
+            // 职业 (修改样式类)
+            document.getElementById('res-careers').innerHTML = data.careers.map(c => `<span class="tag tag-career">${c}</span>`).join('');
+
+            switchPage('result');
+        }
+
+        function restartTest() {
+            currentIdx = 0;
+            userAnswers.fill(null);
+            switchPage('intro');
+        }
+
+        function saveReport() {
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "生成中...";
+            btn.disabled = true;
+
+            const resultButtons = document.getElementById('result-buttons');
+            const resultSection = document.getElementById('result-page');
+            const typeName = document.getElementById('res-type');
+
+            resultButtons.style.display = 'none';
+
+            // 确保页面滚动到顶部，防止截图截断
+            window.scrollTo(0,0);
+
+            setTimeout(() => {
+                html2canvas(resultSection, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    logging: false,
+                    scrollY: -window.scrollY,
+                    windowHeight: resultSection.scrollHeight + 100,
+                    height: resultSection.scrollHeight + 50,
+                    onclone: function(clonedDoc) {
+                        const clonedSection = clonedDoc.getElementById('result-page');
+                        if (clonedSection) {
+                            clonedSection.style.boxShadow = 'none';
+                            clonedSection.style.animation = 'none';
+                            clonedSection.style.margin = '0';
+                            clonedSection.style.padding = '20px';
+                        }
+                    }
+                }).then(canvas => {
+                    resultButtons.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+
+                    const link = document.createElement('a');
+                    link.download = `MBTI测试报告_${typeName.innerText}.png`;
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }).catch(error => {
+                    console.error('Error:', error);
+                    resultButtons.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    alert('生成失败，请重试');
+                });
+            }, 500);
+        }
+
+        function savePDF() {
+            const btn = document.getElementById('save-pdf-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "生成PDF中...";
+            btn.disabled = true;
+
+            const resultButtons = document.getElementById('result-buttons');
+            const resultSection = document.getElementById('result-page');
+            const typeName = document.getElementById('res-type');
+
+            resultButtons.style.display = 'none';
+            window.scrollTo(0,0);
+
+            setTimeout(() => {
+                html2canvas(resultSection, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    logging: false,
+                    scrollY: 0,
+                    windowHeight: resultSection.scrollHeight,
+                    height: resultSection.scrollHeight,
+                    onclone: function(clonedDoc) {
+                        const clonedSection = clonedDoc.getElementById('result-page');
+                        if (clonedSection) {
+                            clonedSection.style.boxShadow = 'none';
+                            clonedSection.style.animation = 'none';
+                            clonedSection.style.margin = '0';
+                        }
+                    }
+                }).then(canvas => {
+                    resultButtons.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const pdfWidth = 210;
+                    const pdfHeight = 297;
+                    const imgWidth = pdfWidth - 20;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+
+                    let heightLeft = imgHeight;
+                    let position = 10;
+
+                    doc.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= (pdfHeight - 20);
+
+                    while (heightLeft > 0) {
+                        position -= 297;
+                        doc.addPage();
+                        doc.addImage(imgData, 'JPEG', 10, position + 20, imgWidth, imgHeight);
+                        heightLeft -= 297;
+                    }
+
+                    doc.save(`MBTI测试报告_${typeName.innerText}.pdf`);
+                }).catch(error => {
+                    console.error('Error:', error);
+                    resultButtons.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    alert('生成PDF失败，请重试');
+                });
+            }, 500);
+        }
+    </script>
+</body>
+</html>
